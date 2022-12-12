@@ -1,1 +1,1 @@
-# -typed-reddit
+# typed-reddit
