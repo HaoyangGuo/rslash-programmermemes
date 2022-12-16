@@ -8,10 +8,12 @@ import { UserResolver } from "./resolvers/user";
 import session from "express-session";
 import { createClient } from "redis";
 import connectRedis from "connect-redis";
-import { __prod__ } from "./constants";
+import { COOKIE_NAME, __prod__ } from "./constants";
 import { MyContext } from "./types";
+import cors from "cors";
 
 const main = async () => {
+
 	await AppDataSource.initialize()
 		.then(() => {
 			console.log("Data Source has been initialized!");
@@ -26,13 +28,16 @@ const main = async () => {
 	const redisClient = createClient({ legacyMode: true });
 	await redisClient.connect();
 
-	redisClient.on("error", (err) => {
-		console.error("Redis error:", err);
-	});
+	app.use(
+		cors({
+			credentials: true,
+			origin: ["http://localhost:3000", "https://studio.apollographql.com"],
+		})
+	);
 
 	app.use(
 		session({
-			name: "qid",
+			name: COOKIE_NAME,
 			store: new RedisStore({
 				client: redisClient,
 				disableTouch: true,
@@ -64,10 +69,7 @@ const main = async () => {
 	await apolloServer.start();
 	apolloServer.applyMiddleware({
 		app,
-		cors: {
-			credentials: true,
-			origin: "https://studio.apollographql.com",
-		},
+		cors: false,
 	});
 
 	app.listen(4000, () => {

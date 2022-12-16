@@ -23,8 +23,12 @@ export class User {
   updatedAt!: Date;
   
   @Field(() => String)
-	@Column()
-  username!: string;
+	@Column({unique: true})
+	username!: string;
+	
+	@Field(() => String)
+	@Column({unique: true})
+	email!: string;
   
   @Column()
   password!: string;

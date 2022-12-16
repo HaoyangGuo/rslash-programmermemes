@@ -3,7 +3,6 @@ import {
 	Arg,
 	Ctx,
 	Field,
-	InputType,
 	Mutation,
 	ObjectType,
 	Query,
@@ -11,14 +10,9 @@ import {
 } from "type-graphql";
 import { User } from "../entity/User";
 import argon2 from "argon2";
-
-@InputType()
-class UsernamePasswordInput {
-	@Field()
-	username: string;
-	@Field()
-	password: string;
-}
+import { COOKIE_NAME } from "../constants";
+import { UsernamePasswordInput } from "../utils/UsernamePasswordInput";
+import { validateRegister } from "../utils/validateRegister";
 
 @ObjectType()
 class FieldError {
@@ -55,29 +49,12 @@ export class UserResolver {
 		@Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
 		@Ctx() { AppDataSource, req }: MyContext
 	): Promise<UserResponse> {
-		if (options.username.length <= 2) {
-			return {
-				errors: [
-					{
-						field: "username",
-						message: "username must contain at least 2 characters",
-					},
-				],
-			};
-		}
-
-		if (options.password.length <= 6) {
-			return {
-				errors: [
-					{
-						field: "password",
-						message: "password must contain at least 6 characters",
-					},
-				],
-			};
-		}
-
 		const userRepository = AppDataSource.getRepository(User);
+
+		const errors = validateRegister(options);
+		if (errors) {
+			return { errors };
+		}
 
 		const existingUser = await userRepository.findOneBy({
 			username: options.username,
@@ -97,6 +74,7 @@ export class UserResolver {
 		const user = userRepository.create({
 			username: options.username,
 			password: hashedPassword,
+			email: options.email,
 		});
 		await userRepository.save(user);
 
@@ -107,18 +85,22 @@ export class UserResolver {
 
 	@Mutation(() => UserResponse)
 	async login(
-		@Arg("options", () => UsernamePasswordInput) options: UsernamePasswordInput,
+		@Arg("usernameOrEmail") usernameOrEmail: string,
+		@Arg("password") password: string,
 		@Ctx() { AppDataSource, req }: MyContext
 	): Promise<UserResponse> {
 		const userRepository = AppDataSource.getRepository(User);
-		const user = await userRepository.findOneBy({ username: options.username });
+		const user = await userRepository.findOneBy(
+			usernameOrEmail.includes("@")
+				? { email: usernameOrEmail }
+				: { username: usernameOrEmail }
+		);
 		if (!user) {
-			console.log("User not found");
 			return {
-				errors: [{ field: "username", message: "That username doesn't exist" }],
+				errors: [{ field: "usernameOrEmail", message: "That username or email doesn't exist" }],
 			};
 		}
-		const valid = await argon2.verify(user.password, options.password);
+		const valid = await argon2.verify(user.password, password);
 		if (!valid) {
 			return {
 				errors: [{ field: "password", message: "Incorrect password" }],
@@ -128,5 +110,32 @@ export class UserResolver {
 		req.session.userId = user.id;
 
 		return { user };
+	}
+
+	@Mutation(() => Boolean)
+	logout(
+		@Ctx()
+		{ req, res }: MyContext
+	) {
+		return new Promise((resolve) =>
+			req.session.destroy((err) => {
+				res.clearCookie(COOKIE_NAME);
+				if (err) {
+					resolve(false);
+					return;
+				}
+				resolve(true);
+			})
+		);
+	}
+
+	@Mutation(() => Boolean)
+	async forgotPassword(
+		@Ctx()
+		@Arg("email") email: string,
+		// { AppDataSource }: MyContext
+	) {
+		// const userRepository = AppDataSource.getRepository(User);
+		return true;
 	}
 }
