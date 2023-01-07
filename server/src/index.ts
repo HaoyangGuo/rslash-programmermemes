@@ -1,19 +1,22 @@
 import { AppDataSource } from "./data-source";
 import express from "express";
+import session from "express-session";
+import Redis from "ioredis";
+import connectRedis from "connect-redis";
+import cors from "cors";
+import imageRouter from "./utils/imageRouter";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import session from "express-session";
-import { createClient } from "redis";
-import connectRedis from "connect-redis";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import { MyContext } from "./types";
-import cors from "cors";
+import { createUserLoader } from "./utils/createUserLoader";
+import { createUpvoteLoader } from "./utils/createUpvoteLoader";
+import "dotenv-safe/config";
 
 const main = async () => {
-
 	await AppDataSource.initialize()
 		.then(() => {
 			console.log("Data Source has been initialized!");
@@ -21,17 +24,18 @@ const main = async () => {
 		.catch((err) => {
 			console.error("Error during Data Source initialization:", err);
 		});
+	await AppDataSource.runMigrations();
 
 	const app = express();
 
 	const RedisStore = connectRedis(session);
-	const redisClient = createClient({ legacyMode: true });
-	await redisClient.connect();
+	const redis = new Redis(process.env.REDIS_URL);
+	app.set("trust proxy", 1);
 
 	app.use(
 		cors({
 			credentials: true,
-			origin: ["http://localhost:3000", "https://studio.apollographql.com"],
+			origin: process.env.CORS_ORIGIN,
 		})
 	);
 
@@ -39,7 +43,7 @@ const main = async () => {
 		session({
 			name: COOKIE_NAME,
 			store: new RedisStore({
-				client: redisClient,
+				client: redis as any,
 				disableTouch: true,
 			}),
 			cookie: {
@@ -47,12 +51,15 @@ const main = async () => {
 				httpOnly: true,
 				secure: __prod__,
 				sameSite: "lax",
+				domain: __prod__ ? ".dhguo.dev" : undefined,
 			},
 			saveUninitialized: false,
-			secret: "asidfhaiosufhiasovbsaudvh",
+			secret: process.env.SESSION_SECRET as string,
 			resave: false,
 		})
 	);
+
+	app.use("/rest", imageRouter);
 
 	const apolloServer = new ApolloServer({
 		schema: await buildSchema({
@@ -63,6 +70,9 @@ const main = async () => {
 			AppDataSource,
 			req,
 			res,
+			redis,
+			userLoader: createUserLoader(),
+			upvoteLoader: createUpvoteLoader(),
 		}),
 	});
 
@@ -72,8 +82,8 @@ const main = async () => {
 		cors: false,
 	});
 
-	app.listen(4000, () => {
-		console.log("Server started on localhost:4000");
+	app.listen(parseInt(process.env.PORT), () => {
+		console.log(`Server started on localhost:${parseInt(process.env.PORT)}`);
 	});
 };
 

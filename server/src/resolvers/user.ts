@@ -3,16 +3,21 @@ import {
 	Arg,
 	Ctx,
 	Field,
+	FieldResolver,
 	Mutation,
 	ObjectType,
 	Query,
 	Resolver,
+	Root,
 } from "type-graphql";
 import { User } from "../entity/User";
 import argon2 from "argon2";
-import { COOKIE_NAME } from "../constants";
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 import { UsernamePasswordInput } from "../utils/UsernamePasswordInput";
 import { validateRegister } from "../utils/validateRegister";
+import { sendEmail } from "../utils/sendEmail";
+import { v4 } from "uuid";
+import "dotenv-safe/config";
 
 @ObjectType()
 class FieldError {
@@ -31,8 +36,16 @@ class UserResponse {
 	user?: User;
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+	@FieldResolver(() => String)
+	email(@Root() user: User, @Ctx() { req }: MyContext) {
+		if (req.session.userId === user.id) {
+			return user.email;
+		}
+		return "";
+	}
+
 	@Query(() => User, { nullable: true })
 	me(@Ctx() { AppDataSource, req }: MyContext) {
 		if (!req.session.userId) {
@@ -70,6 +83,20 @@ export class UserResolver {
 			};
 		}
 
+		const existingEmail = await userRepository.findOneBy({
+			email: options.email,
+		});
+		if (existingEmail) {
+			return {
+				errors: [
+					{
+						field: "email",
+						message: "email already exists",
+					},
+				],
+			};
+		}
+
 		const hashedPassword = await argon2.hash(options.password);
 		const user = userRepository.create({
 			username: options.username,
@@ -97,7 +124,12 @@ export class UserResolver {
 		);
 		if (!user) {
 			return {
-				errors: [{ field: "usernameOrEmail", message: "That username or email doesn't exist" }],
+				errors: [
+					{
+						field: "usernameOrEmail",
+						message: "That username or email doesn't exist",
+					},
+				],
 			};
 		}
 		const valid = await argon2.verify(user.password, password);
@@ -124,6 +156,7 @@ export class UserResolver {
 					resolve(false);
 					return;
 				}
+
 				resolve(true);
 			})
 		);
@@ -131,11 +164,84 @@ export class UserResolver {
 
 	@Mutation(() => Boolean)
 	async forgotPassword(
-		@Ctx()
 		@Arg("email") email: string,
-		// { AppDataSource }: MyContext
+		@Ctx() { AppDataSource, redis }: MyContext
 	) {
-		// const userRepository = AppDataSource.getRepository(User);
+		const userRepository = AppDataSource.getRepository(User);
+		const user = await userRepository.findOneBy({ email });
+		if (!user) {
+			// console.log("user not found");
+			return true;
+		}
+
+		const token = v4();
+
+		const key = FORGET_PASSWORD_PREFIX + token;
+		await redis.set(key, user.id, "px" as any, 1000 * 60 * 60 * 24 * 3);
+
+		// console.log("forgot: token: ", token)
+		// console.log("forgot: userid: ", await redis.get(key))
+		// console.log("email sent");
+
+		await sendEmail(
+			email,
+			`${process.env.CORS_ORIGIN}/change-password/${token}`
+		);
+
+		
 		return true;
+	}
+
+	@Mutation(() => UserResponse)
+	async changePassword(
+		@Arg("token") token: string,
+		@Arg("newPassword") newPassword: string,
+		@Ctx() { AppDataSource, req, redis }: MyContext
+	): Promise<UserResponse> {
+		if (newPassword.length < 6) {
+			return {
+				errors: [
+					{
+						field: "newPassword",
+						message: "new password must contain at least 6 characters",
+					},
+				],
+			};
+		}
+
+		const key = FORGET_PASSWORD_PREFIX + token;
+		const userId = await redis.get(key);
+		if (!userId) {
+			return {
+				errors: [
+					{
+						field: "newPassword",
+						message: "token expired",
+					},
+				],
+			};
+		}
+
+		const userRepository = AppDataSource.getRepository(User);
+		const user = await userRepository.findOneBy({ id: parseInt(userId) });
+		if (!user) {
+			return {
+				errors: [
+					{
+						field: "newPassword",
+						message: "user no longer exists",
+					},
+				],
+			};
+		}
+
+		const hashedPassword = await argon2.hash(newPassword);
+		user.password = hashedPassword;
+		await userRepository.save(user);
+		req.session.userId = user.id;
+
+		await redis.del(key);
+
+		return { user };
 	}
 }

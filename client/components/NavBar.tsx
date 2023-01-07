@@ -5,10 +5,18 @@ import { Menu, Transition } from "@headlessui/react";
 import { useMeQuery, useLogoutMutation } from "../generated/graphql";
 import { withUrqlClient } from "next-urql";
 import { createUrqlClient } from "../utils/createUrqlClient";
+import { useRouter } from "next/router";
+import { isServer } from "../utils/isServer";
 
-const NavBar: React.FC<{}> = () => {
-	const [{ data, fetching }] = useMeQuery({});
+const NavBar: React.FC = () => {
+	const router = useRouter();
+	const [{ data, fetching }] = useMeQuery({	});
 	const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
+
+	const handleLogoutButtonClicked = async () => {
+		await logout({});
+		router.reload();
+	};
 
 	let body = null;
 	let menu = null;
@@ -18,13 +26,13 @@ const NavBar: React.FC<{}> = () => {
 		body = (
 			<>
 				<Link href="/login">
-					<button className="text-center text-base mr-2 rounded-full border border-transparent bg-orange-600 py-1 w-28 font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1">
-						login
+					<button className="text-center text-base font-medium mr-2 rounded-full w-28 py-1.5 border text-white bg-orange-600 hover:bg-orange-500">
+						Log In
 					</button>
 				</Link>
 				<Link href="/register">
-					<button className="text-center text-base rounded-full border border-transparent bg-gray-300 py-1 w-28 font-medium text-black hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1">
-						register
+					<button className="text-center text-base font-medium rounded-full w-28 py-1.5 border text-white bg-orange-600 hover:bg-orange-500">
+						Register
 					</button>
 				</Link>
 			</>
@@ -33,15 +41,15 @@ const NavBar: React.FC<{}> = () => {
 			<>
 				<Menu.Item>
 					<Link href="/login">
-						<button className="text-center text-base rounded-full border border-transparent bg-orange-600 py-1 w-28 font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1">
-							login
+						<button className="text-center text-base font-medium rounded-full w-28 py-1.5 border text-white bg-orange-600 hover:bg-orange-500">
+							Log In
 						</button>
 					</Link>
 				</Menu.Item>
 				<Menu.Item>
 					<Link href="/register">
-						<button className="text-center text-base rounded-full border border-transparent bg-gray-300 py-1 w-28 font-medium text-black hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1">
-							register
+						<button className="text-center text-base font-medium rounded-full w-28 py-1.5 border text-white bg-orange-600 hover:bg-orange-500">
+							Register
 						</button>
 					</Link>
 				</Menu.Item>
@@ -52,11 +60,11 @@ const NavBar: React.FC<{}> = () => {
 			<>
 				<div className="mr-4 font-medium">{data.me.username}</div>
 				<button
-					onClick={() => logout({})}
+					onClick={() => handleLogoutButtonClicked()}
 					disabled={logoutFetching}
-					className="text-center text-base rounded-full border border-transparent bg-gray-300 py-1 w-28 font-medium text-black hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+					className="text-center text-base font-medium mr-2 rounded-full w-28 py-1.5 border text-white bg-orange-600 hover:bg-orange-500"
 				>
-					logout
+					Log Out
 				</button>
 			</>
 		);
@@ -67,11 +75,11 @@ const NavBar: React.FC<{}> = () => {
 				</Menu.Item>
 				<Menu.Item>
 					<button
-						onClick={() => logout({})}
+						onClick={() => handleLogoutButtonClicked()}
 						disabled={logoutFetching}
-						className="text-center text-base rounded-full border border-transparent bg-gray-300 py-1 w-28 font-medium text-black hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-1"
+						className="text-center text-base font-medium rounded-full w-28 py-1.5 border text-white bg-orange-600 hover:bg-orange-500"
 					>
-						logout
+						Log Out
 					</button>
 				</Menu.Item>
 			</>
@@ -79,33 +87,40 @@ const NavBar: React.FC<{}> = () => {
 	}
 
 	return (
-		<div className="flex justify-between items-center border-b-[1px] border-gray-200 h-14 px-4">
-			<div className="flex items-center">
-				<CommandLineIcon className="w-12 h-12 mr-2 text-orange-600" />
-				<div className="text-2xl font-bold">r/programmermemes</div>
-			</div>
-			<div className="items-center hidden md:flex">{body}</div>
-			<Menu as="div" className="relative inline-block text-left md:hidden">
-				<div>
-					<Menu.Button className="inline-flex w-full justify-center border-gray-300 p-2">
-						<Bars3Icon className="h-7 w-7" />
-					</Menu.Button>
-				</div>
-
-				<Transition
-					as={Fragment}
-					enter="transition ease-out duration-100"
-					enterFrom="transform opacity-0 scale-95"
-					enterTo="transform opacity-100 scale-100"
-					leave="transition ease-in duration-75"
-					leaveFrom="transform opacity-100 scale-100"
-					leaveTo="transform opacity-0 scale-95"
+		<div className="flex justify-between items-center bg-white h-16 px-4 border-b-[1px] border-gray-200">
+			<div className="md:max-w-3xl mx-auto w-full flex justify-between items-center">
+				<Link
+					href={"/"}
+					className="flex items-center hover:bg-gray-200 pr-1 rounded"
 				>
-					<Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-						<div className="py-4 items-center flex flex-col gap-2">{menu}</div>
-					</Menu.Items>
-				</Transition>
-			</Menu>
+					<CommandLineIcon className="w-10 h-10 mr-1 text-orange-600" />
+					<div className="text-2xl font-bold">r/ProgrammerMemes</div>
+				</Link>
+				<div className="items-center hidden md:flex">{body}</div>
+				<Menu as="div" className="relative inline-block text-left md:hidden">
+					<div>
+						<Menu.Button className="inline-flex w-full justify-center border-gray-300 p-2">
+							<Bars3Icon className="h-7 w-7" />
+						</Menu.Button>
+					</div>
+
+					<Transition
+						as={Fragment}
+						enter="transition ease-out duration-100"
+						enterFrom="transform opacity-0 scale-95"
+						enterTo="transform opacity-100 scale-100"
+						leave="transition ease-in duration-75"
+						leaveFrom="transform opacity-100 scale-100"
+						leaveTo="transform opacity-0 scale-95"
+					>
+						<Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+							<div className="py-4 items-center flex flex-col gap-2">
+								{menu}
+							</div>
+						</Menu.Items>
+					</Transition>
+				</Menu>
+			</div>
 		</div>
 	);
 };

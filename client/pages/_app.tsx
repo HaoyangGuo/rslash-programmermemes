@@ -1,7 +1,7 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { Roboto } from "@next/font/google";
-import NavBar from "../components/NavBar";
+import Head from "next/head";
 
 const roboto = Roboto({
 	subsets: ["latin"],
@@ -11,6 +11,9 @@ const roboto = Roboto({
 export default function App({ Component, pageProps }: AppProps) {
 	return (
 		<>
+			<Head>
+				<title>r/ProgrammerMemes</title>
+			</Head>
 			<main className={roboto.className}>
 				<Component {...pageProps} />
 			</main>

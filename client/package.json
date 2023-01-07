@@ -21,6 +21,7 @@
     "eslint": "8.29.0",
     "eslint-config-next": "13.0.6",
     "graphql": "^16.6.0",
+    "graphql-tag": "^2.12.6",
     "next": "13.0.6",
     "next-urql": "^4.0.2",
     "react": "18.2.0",

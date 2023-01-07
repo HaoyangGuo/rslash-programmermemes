@@ -5,7 +5,10 @@ import {
 	Column,
 	CreateDateColumn,
 	UpdateDateColumn,
+	OneToMany,
 } from "typeorm";
+import { Post } from "./Post";
+import { Upvote } from "./Upvote";
 
 @ObjectType()
 @Entity()
@@ -20,16 +23,22 @@ export class User {
 
 	@Field(() => String)
 	@UpdateDateColumn()
-  updatedAt!: Date;
-  
-  @Field(() => String)
-	@Column({unique: true})
-	username!: string;
-	
+	updatedAt!: Date;
+
 	@Field(() => String)
-	@Column({unique: true})
+	@Column({ unique: true })
+	username!: string;
+
+	@Field(() => String)
+	@Column({ unique: true })
 	email!: string;
-  
-  @Column()
-  password!: string;
+
+	@Column()
+	password!: string;
+
+	@OneToMany(() => Post, (post) => post.creator)
+	posts: Post[];
+
+	@OneToMany(() => Upvote, (upvote) => upvote.user)
+	upvotes: Upvote[];
 }

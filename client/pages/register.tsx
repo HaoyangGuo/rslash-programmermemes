@@ -3,14 +3,15 @@ import {
 	LockClosedIcon,
 	CommandLineIcon,
 	ExclamationCircleIcon,
+	ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRegisterMutation } from "../generated/graphql";
 import { useRouter } from "next/router";
 import { withUrqlClient } from "next-urql";
 import { createUrqlClient } from "../utils/createUrqlClient";
-
-interface registerProps {}
+import { NextPage } from "next";
+import Link from "next/link";
 
 type registerFormValues = {
 	username: string;
@@ -18,7 +19,7 @@ type registerFormValues = {
 	password: string;
 };
 
-const Register: React.FC<registerProps> = () => {
+const Register: NextPage = () => {
 	const [, registerUser] = useRegisterMutation();
 	const router = useRouter();
 
@@ -29,7 +30,7 @@ const Register: React.FC<registerProps> = () => {
 		formState: { errors, isSubmitting },
 	} = useForm<registerFormValues>({});
 	const onSubmit: SubmitHandler<registerFormValues> = async (values) => {
-		const response = await registerUser({options: values});
+		const response = await registerUser({ options: values });
 		if (response.data?.register.errors) {
 			response.data.register.errors.forEach((error) => {
 				setError(error.field as any, {
@@ -44,20 +45,27 @@ const Register: React.FC<registerProps> = () => {
 	return (
 		<div className="h-screen">
 			<div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-				<div className="w-full max-w-sm space-y-8">
+				<div className="w-full max-w-sm space-y-8 -mt-20">
 					<div>
+						<Link
+							href={"/"}
+							className="flex items-center w-min mb-12 text-sm py-1 px-2 rounded-full hover:cursor-pointer border border-orange-600 text-orange-600"
+						>
+							<ArrowLeftIcon className="w-4 h-4" />
+							Home
+						</Link>
 						<div className="flex justify-center items-center">
-							<CommandLineIcon className="w-12 h-12 text-orange-600" />
-							<div className="text-3xl ml-2">r/programmermemes</div>{" "}
+							<CommandLineIcon className="w-10 h-10 mr-1 text-orange-600" />
+							<div className="text-3xl">r/ProgrammerMemes</div>{" "}
 						</div>
 						<h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
 							Register
 						</h2>
 					</div>
 					<form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-						<div className="space-y-2 rounded-md shadow-sm">
+						<div className="-space-y-px rounded-md shadow-sm">
 							<div>
-								<label htmlFor="username">
+								<label htmlFor="username" className="sr-only">
 									Username:
 								</label>
 								<input
@@ -71,12 +79,12 @@ const Register: React.FC<registerProps> = () => {
 									id="username"
 									name="username"
 									required
-									className="mt-1 rounded-sm relative block w-full appearance-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-orange-500 focus:outline-none focus:ring-orange-500 sm:text-sm focus:ring-1"
+									className="rounded-t-md relative block w-full appearance-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-orange-500 focus:outline-none focus:ring-orange-500 sm:text-sm focus:ring-1"
 									placeholder="Username"
 								/>
 							</div>
 							<div>
-								<label htmlFor="email">
+								<label htmlFor="email" className="sr-only">
 									Email:
 								</label>
 								<input
@@ -91,12 +99,12 @@ const Register: React.FC<registerProps> = () => {
 									name="email"
 									required
 									type="email"
-									className="mt-1 rounded-sm relative block w-full appearance-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-orange-500 focus:outline-none focus:ring-orange-500 sm:text-sm focus:ring-1"
+									className="relative block w-full appearance-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-orange-500 focus:outline-none focus:ring-orange-500 sm:text-sm focus:ring-1"
 									placeholder="Email"
 								/>
 							</div>
 							<div>
-								<label htmlFor="password">
+								<label htmlFor="password" className="sr-only">
 									Password:
 								</label>
 								<input
@@ -111,42 +119,22 @@ const Register: React.FC<registerProps> = () => {
 									name="password"
 									type="password"
 									required
-									className="mt-1 rounded-sm relative block w-full appearance-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-orange-500 focus:outline-none focus:ring-orange-500 sm:text-sm"
+									className="rounded-b-md relative block w-full appearance-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-orange-500 focus:outline-none focus:ring-orange-500 sm:text-sm"
 									placeholder="Password"
 								/>
 							</div>
 						</div>
-
-						{/* <div className="flex items-center justify-between">
-									<div className="flex items-center">
-										<input
-											id="remember-me"
-											name="remember-me"
-											type="checkbox"
-											className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-										/>
-										<label
-											htmlFor="remember-me"
-											className="ml-2 block text-sm text-gray-900"
-										>
-											Remember me
-										</label>
-									</div>
-
-									<div className="text-sm">
-										<a
-											href="#"
-											className="font-medium text-orange-600 hover:text-orange-500"
-										>
-											Forgot your password?
-										</a>
-									</div>
-								</div> */}
 						<div className="leading-tight text-sm">
 							{errors.username && (
 								<p className="text-orange-700 h-min flex items-center gap-2">
 									<ExclamationCircleIcon className="w-5 h-5" />
 									<span>{errors.username.message}</span>
+								</p>
+							)}
+							{errors.email && (
+								<p className="text-orange-700 h-min flex items-center gap-2">
+									<ExclamationCircleIcon className="w-5 h-5" />
+									<span>{errors.email.message}</span>
 								</p>
 							)}
 							{errors.password && (
@@ -160,7 +148,7 @@ const Register: React.FC<registerProps> = () => {
 							<button
 								type="submit"
 								disabled={isSubmitting}
-								className="group relative flex w-full justify-center rounded-md border border-transparent bg-orange-600 py-2 px-4 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+								className="group relative flex w-full justify-center rounded-full border border-transparent bg-orange-600 py-2 px-4 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
 							>
 								<span className="absolute inset-y-0 left-0 flex items-center pl-3">
 									<LockClosedIcon

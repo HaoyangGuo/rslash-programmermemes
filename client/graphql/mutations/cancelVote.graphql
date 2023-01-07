@@ -1,0 +1,3 @@
+mutation CancelVote($value: Int!, $postId: Int!) {
+  cancelVote(value: $value, postId: $postId)
+}

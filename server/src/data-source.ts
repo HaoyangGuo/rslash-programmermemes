@@ -3,15 +3,16 @@ import { DataSource } from "typeorm";
 import { __prod__ } from "./constants";
 import { Post } from "./entity/Post";
 import { User } from "./entity/User";
+import { Upvote } from "./entity/Upvote";
+import path from "path";
+import "dotenv-safe/config";
+
 
 export const AppDataSource = new DataSource({
 	type: "postgres",
-	host: "localhost",
-	port: 5432,
-	username: "postgres",
-	password: "postgres",
+	url: process.env.DATABASE_URL,
 	database: "typed_reddit",
-	synchronize: !__prod__,
-	entities: [Post, User],
-	migrationsTableName: "migrations",
+	synchronize: false,
+	entities: [Post, User, Upvote],
+	migrations: [path.join(__dirname, "/migrations/*")],
 });
