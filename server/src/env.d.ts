@@ -11,6 +11,7 @@ declare global {
       SESSION_SECRET: string;
       CORS_ORIGIN: string;
       PORT: string;
+      COOKIE_DOMAIN: string;
     }
   }
 }

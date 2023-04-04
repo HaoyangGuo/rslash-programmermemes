@@ -34,7 +34,7 @@ function Home() {
 					<div className="border border-gray-300 flex h-16 mb-5 bg-white rounded shadow items-center px-5">
 						<Link
 							href={"/create-post"}
-							className="bg-orange-600 w-64 text-center py-2 mx-auto rounded-full text-white font-medium text-base"
+							className="bg-orange-600 hover:bg-orange-500 w-64 text-center py-2 mx-auto rounded-full text-white font-medium text-base"
 						>
 							Create a post for your meme!
 						</Link>

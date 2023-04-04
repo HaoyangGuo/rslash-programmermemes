@@ -50,8 +50,8 @@ const main = async () => {
 				maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
 				httpOnly: true,
 				secure: __prod__,
-				sameSite: "lax",
-				domain: __prod__ ? ".dhguo.dev" : undefined,
+				sameSite: "none",
+				domain: __prod__ ? process.env.COOKIE_DOMAIN : undefined,
 			},
 			saveUninitialized: false,
 			secret: process.env.SESSION_SECRET as string,
