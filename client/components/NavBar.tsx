@@ -6,7 +6,7 @@ import { useMeQuery, useLogoutMutation } from "../generated/graphql";
 import { withUrqlClient } from "next-urql";
 import { createUrqlClient } from "../utils/createUrqlClient";
 import { useRouter } from "next/router";
-import { isServer } from "../utils/isServer";
+import { Github } from "lucide-react";
 
 const NavBar: React.FC = () => {
   const router = useRouter();
@@ -89,16 +89,10 @@ const NavBar: React.FC = () => {
   return (
     <div className="flex justify-between items-center bg-white h-16 px-4 border-b-[1px] border-gray-200">
       <a
-        className="absolute top-2 left-2 flex gap-1 p-0.5 md:py-1.5 md:px-2.5 hover:cursor-pointer text-base bg-black text-white rounded-full items-center hover:underline"
+        className="hidden absolute top-[0.8rem] left-2 md:flex gap-1 p-0.5 md:py-1.5 md:px-2.5 hover:cursor-pointer text-base bg-black text-white rounded-full items-center hover:underline"
         href="https://github.com/HaoyangGuo/rslash-programmermemes"
       >
-        <div className="h-6 w-6">
-          <img
-            src="/icons/github-mark-white.svg"
-            alt="github"
-            className="object-fill"
-          />
-        </div>
+        <Github className="w-6 h-6" />
         <span className="hidden md:block">Source Code</span>
       </a>
       <div className="md:max-w-3xl mx-auto w-full flex justify-between items-center">
