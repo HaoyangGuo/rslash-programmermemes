@@ -90,7 +90,7 @@ const NavBar: React.FC = () => {
     <div className="flex justify-between items-center bg-white h-16 px-4 border-b-[1px] border-gray-200">
       <a
         className="absolute top-2 left-2 flex gap-1 p-0.5 md:py-1.5 md:px-2.5 hover:cursor-pointer text-base bg-black text-white rounded-full items-center hover:underline"
-        href="https://github.com/HaoyangGuo/recipe-space"
+        href="https://github.com/HaoyangGuo/rslash-programmermemes"
       >
         <div className="h-6 w-6">
           <img
